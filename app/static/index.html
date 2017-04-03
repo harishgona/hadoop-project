@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      <meta charset = "utf-8">
+      <link href = "https://code.jquery.com/ui/1.12.1/themes/cupertino/jquery-ui.css" rel = "stylesheet">    
+      <script src = "https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+      <script type="text/javascript" src="http://canvasjs.com/assets/script/canvasjs.min.js"> </script>
+      <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+      
+        <script type="text/javascript">
+            $(function () {
+            $("#datemenu").datepicker({ dateFormat: 'yymmdd' }).val();
+          });
+        </script>
+
+        <script type="text/javascript"> 
+        $(document).ready(function(){  
+
+           
+            $("#enter").click(function() {
+               var x = $("#datemenu").val();
+              if (x == "") {
+                alert("enter a value");
+                return false;
+               }
+
+              var datapts = [];  
+              var max_temp =50;
+              var addr = "http://myweathersystem.ddns.net/forecast/" + $("#datemenu").val();
+                    $.ajax({
+                        url: addr,
+                        type: "GET",
+                        dataType: "json"
+                    }).then(function(data) {
+                        var len = 0;
+              max_temp = data[0].TMAX;
+                        for(var i =0 ; i<5; i++) {
+                              tmp = {
+                    'label' : data[i].DATE,
+                    'y' : [Math.ceil(data[i].TMIN),Math.ceil(data[i].TMAX)],
+                  };
+                  if( data[i].TMAX > max_temp){
+                    max_temp = Math.ceil(data[i].TMAX);
+                  }
+                  datapts.push(tmp);
+                        }
+              var chart = new CanvasJS.Chart("chartdisplay",{            
+              title:{
+                text: "Weather Forecast",              
+              },
+              axisY: {
+                includeZero: false,
+                suffix: "°C",
+                maximum:max_temp+10,
+                gridThickness: 0.2
+              },
+              toolTip:{
+                shared: true,
+                content: "{name} </br> <strong>Temperature: </strong> </br> Min: {y[0]}°C, Max: {y[1]}°C",
+              },
+              data: [
+              {
+                type: "rangeSplineArea",
+                fillOpacity: 0,
+                color: "#91AAB1",
+                indexLabelFormatter: formatter,
+                dataPoints:  datapts
+              
+              }]
+            });
+            chart.render();
+
+            function formatter(e) {
+              if(e.index === 0 && e.dataPoint.x === 0) {
+                return " Low " + e.dataPoint.y[e.index];
+
+              }
+              if(e.index == 1 && e.dataPoint.x === 0) {
+                return " High " + e.dataPoint.y[e.index];
+              }
+              else{
+                return e.dataPoint.y[e.index];
+              }
+            } 
+      });
+                       
+                    });
+
+            
+    });
+        
+        </script>
+     
+    </head>
+
+    <body style="background-color: skyblue">
+        <div style="text-align: center">
+            Enter Date to forecast: 
+            <div><input type="text" id="datemenu"></div>
+            <br>
+          <div>          
+            <input type="button" id="enter" value="forecast">
+          </div>
+          <div id="chartdisplay" style="height: 300px; width: 500px; display: block; margin: auto"></div>
+        </div>
+    </body>
+</html>
+
